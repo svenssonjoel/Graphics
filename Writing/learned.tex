@@ -1,0 +1,386 @@
+
+
+\title{stuff}
+\author{Joel Svensson}
+\date{\today}
+
+\documentclass[12pt]{article}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
+\begin{document}
+\maketitle
+
+
+
+
+\section{OpenGL}
+
+\subsection{Positioning objects} 
+Objects are positioned using the MODELVIEW matrix. Moving the 
+``camera'' relative to the objects or the objects relative to 
+the ``camera'' has the same effect. Therefore both these concepts
+are managed by the MODELVIEW transformation matrix (hence its name). 
+
+\begin{small}
+\begin{verbatim}
+glMatrixMode(GL_MODELVIEW);
+\end{verbatim}
+\end{small}       
+
+The function {\tt gluLookAt()} positions the camera. If no position 
+is specified (no call to {\tt gluLookAt()} the camera is placed 
+at (0,0,0) looking down the negative $Z$ axis and up is towards positive $Y$
+values.                                   
+
+\begin{figure}
+\begin{small}
+\begin{verbatim}
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+glTranslatef(-1.0,0.0,-6.0);
+glutSolidTeapot(0.5);
+glLoadIdentity();
+glTranslatef(1.0,0.0,-6.0);
+glutSolidTeapot(0.5);
+\end{verbatim}
+\end{small} 
+\label{Place two teapots next to eachother, one way}                   
+\end{figure}
+
+\begin{figure}
+\begin{small}
+\begin{verbatim}
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+glTranslatef(-1.0,0.0,-6.0);
+glutSolidTeapot(0.5);
+glTranslatef(2.0,0.0,0.0);
+glutSolidTeapot(0.5);
+\end{verbatim}
+\end{small} 
+\label{Place two teapots next to eachother, another way. Second teapot 
+       is placed relative to the first one}                   
+\end{figure}
+
+
+\subsection{Projection transformation} 
+Think of this as the properties of the lens of the camera. 
+This transformation is specified in the PROJECTION matrix. 
+
+\begin{small}
+\begin{verbatim}
+glMatrixMode(GL_PROJECTION);
+\end{verbatim}
+\end{small}       
+
+                       
+\subsection{Shaders}
+ (Much of this is differnt in OpenGL 3.x and GLSL 1.5) 
+
+Code here uses functions available from OpenGL version 2.0 and up: 
+
+\begin{small}
+\begin{verbatim}
+ void setShaders() {
+	
+  char *vs,*fs;
+	
+  vertexShader   = glCreateShader(GL_VERTEX_SHADER);
+  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);	
+	
+  vs = textFileRead("Shaders/basic_v.glsl");
+  fs = textFileRead("Shaders/basic_f.glsl");
+	
+  const char * vv = vs;
+  const char * ff = fs;
+	
+  //             handle          #strings   code    lengths 
+  glShaderSource(vertexShader,   1,         &vv,    NULL);
+  glShaderSource(fragmentShader, 1,         &ff,    NULL);
+	
+  free(vs);free(fs);
+	
+  glCompileShader(vertexShader);
+  glCompileShader(fragmentShader);
+	
+  p = glCreateShader();
+		
+  glAttachShader(p,vertexShader);
+  glAttachShader(p,fragmentShader);
+	
+  glLinkProgram(p);
+  glUseProgram(p);
+  
+  printGLError("setShader:");
+}
+
+
+\end{verbatim}
+\end{small}               
+
+{\tt glShaderSource} takes the code as an ({\tt char **}) (why? when does that help?).   
+
+
+Silly vertex program  
+\begin{small}
+\begin{verbatim} 
+void main() {		
+  gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+}
+\end{verbatim}
+\end{small}               
+ 
+Silly fragment program.     
+\begin{small}
+\begin{verbatim} 
+uniform vec4 Color; 
+
+void main() {
+  gl_FragColor = Color; /* vec4(1.0,1.0,1.0,1.0);*/
+}
+
+\end{verbatim}
+\end{small}    
+The {\tt uniform vec4 Color} specifies an input to the shader called Color.
+
+\subsection{GLEW} 
+
+The OpenGL Extensions Wrangler. Use this to be able to access  
+openGL features for versions of opengl higher than 1.1. 
+(I understand there may be Linux vs Windows differences here)
+
+Include {\tt GL/glew.h} and link with {\tt lGLEW}.
+
+for example this enables the use of functions such as: 
+
+\begin{small} 
+\begin{verbatim}
+glCreateShader();
+glShaderSource();
+glCompileShader();
+glCreateProgram();
+glAttachShader();
+glLinkProgram();
+glUseProgram();
+\end{verbatim}
+\end{small}
+
+\subsection{GLUT}
+
+Important functions: 
+\begin{itemize}
+\item{void glutInit(int *argc,char **argv)} 
+\item{void glutInitDisplayMode(unsigned int mode)}
+\item{void glutInitWindowSize(int width, int height)}
+\item{int glutCreateWindow(char *name})
+\item{glutMainLoop()}                                                        
+\end{itemize}
+
+Basic GLUT example:
+\begin{small} 
+\begin{verbatim}
+// C99 
+// gcc -std=c99 main.c -o main -lglut
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <GL/glut.h> 
+
+void display(void) {
+  glClearColor(0.0,0.0,0.0,0.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glutWireTeapot(0.5);
+
+  glutSwapBuffers();
+}
+
+int main(int argc, char **argv) {
+  
+  int win;
+  
+  //Initialize 
+  glutInit(&argc,argv);
+
+  //Set graphics 
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+
+  //Create window 
+  glutInitWindowSize(640,480); 
+  win = glutCreateWindow("Gfx");
+
+  //Register callbacks
+  glutDisplayFunc(display);
+
+  glutMainLoop();
+}
+\end{verbatim}
+\end{small}
+
+\section{SSE Intrinsics}
+
+How does SSE fit in with Graphics programming ? 
+Questions I want answered: 
+\begin{itemize} 
+\item{SOA or AOS} Graphics examples found online seem to imply that 
+          AOS is to be used. For SIMD (SSE) SOA seems to be preferred. 
+\end{itemize}
+
+
+Important header files:
+\begin{itemize}
+\item{mmintrin.h}  MMX intrinsics
+\item{xmmintrin.h} SSE intrinsics
+\item{emmintrin.h} SSE2 intrinsics
+\item{pmmintrin.h} SSE3 intrinsics
+\item{tmmintrin.h} SSSE3 intrinsics (what is this ?) 
+\item{ammintrin.h} SSE4A intrinsics
+\item{smmintrin.h} SSE4.1 intrinsics
+\item{nmmintrin.h} SSE4.2 intrinsics
+\item{bmmintrin.h} SSE5A intrinsics
+
+\end{itemize} 
+
+Detect SSE version: 
+
+\begin{small}
+\begin{verbatim}
+#define cpuid(func,ax,bx,cx,dx)\
+        __asm__ __volatile__ ("cpuid":\
+        "=a" (ax), "=b" (bx), "=c" (cx), "=d" (dx) : "a" (func));
+\end{verbatim}
+\end{small}
+
+\begin{small}
+\begin{verbatim}
+// on return v and m contains largest supported sse version
+void sse_version(int *v, int *m) {
+  
+  int shifts[5] = {25,26,1,19,20}; 
+  
+  int a,b,c,d; 
+  
+  cpuid(1,a,b,c,d); 
+
+  for (int i = 1; i < 6; i ++) {
+    if (i < 2) { 
+      if (d & (1 << shifts[i-1]))  *v = i; 
+    }
+    else
+      if (c & (1 << shifts[i-1])) {
+       *v = i > 4 ? 4 : i; 
+       *m = *m + i >= 4 ? 1 : 0;
+      }
+  }
+}
+\end{verbatim}
+\end{small}
+
+\begin{small}
+\begin{verbatim}
+
+int has_sse() {
+  int a,b,c,d; 
+
+  a = b = c = d = 0; 
+  
+  cpuid(1,a,b,c,d); 
+  
+  return (d & (1 << 25));
+  
+}
+
+int has_sse2() {
+  int a,b,c,d; 
+
+  a = b = c = d = 0; 
+  
+  cpuid(1,a,b,c,d); 
+  
+  return (d & (1 << 26));
+  
+}
+
+int has_sse3() {
+  int a,b,c,d; 
+
+  a = b = c = d = 0; 
+  
+  cpuid(1,a,b,c,d); 
+  
+  return (c & 1);
+  
+}
+
+int has_sse4_1() {
+  int a,b,c,d; 
+
+  a = b = c = d = 0; 
+  
+  cpuid(1,a,b,c,d); 
+  
+  return (c & (1 << 19));
+  
+}
+
+int has_sse4_2() {
+  int a,b,c,d; 
+
+  a = b = c = d = 0; 
+  
+  cpuid(1,a,b,c,d); 
+  
+  return (c & (1 << 20));
+  
+}
+
+
+\end{verbatim}
+\end{small}
+
+
+\appendix
+\section{Data}
+
+\begin{small}
+\begin{verbatim}
+// Cube all triangles specified. (easy to stick in a VBO)
+// as a Triangle strip would be more efficient 
+Vector3f cube_v2[36] =
+  {
+    {-1.0,-1.0,1.0 }, {-1.0,-1.0,-1.0 },  {-1.0,1.0,-1.0 },  //#0
+    {-1.0,1.0,-1.0 }, {-1.0,1.0,1.0 },    {-1.0,-1.0,1.0 },  //#1
+    {-1.0,1.0,1.0 },  {-1.0,1.0,-1.0 },    {1.0,1.0,-1.0 },  //#2
+    {1.0,1.0,-1.0 },  {1.0,1.0,1.0 } ,    {-1.0,1.0,1.0},    //#3
+    {1.0,1.0,1.0 },   {1.0,1.0,-1.0 },    {1.0,-1.0,-1.0 },  //#4
+    {1.0,-1.0,-1.0 }, {1.0,-1.0,1.0 },    {1.0,1.0,1.0 },    //#5
+    {1.0,-1.0,1.0 },  {1.0,-1.0,-1.0 },   {-1.0,-1.0,-1.0 }, //#6
+    {-1.0,-1.0,-1.0 }, {-1.0,-1.0,1.0 },  {1.0,-1.0,1.0 },   //#7 
+    {1.0,-1.0,-1.0 },  {1.0,1.0,-1.0 },   {-1.0,1.0,-1.0 },  //#8
+    {-1.0,1.0,-1.0 },  {-1.0,-1.0,-1.0 }, {1.0,-1.0,-1.0 },  //#9
+    {1.0,1.0,1.0 },    {1.0,-1.0,1.0 },   {-1.0,-1.0,1.0 },  //#10
+    {-1.0,-1.0,1.0 },  {-1.0,1.0,1.0 },   {1.0,1.0,1.0 }     //#11
+  }; 
+
+
+// normals per vertex (duplicated face normals) 
+Vector3f cube_n2[36] = 
+  { 
+    {-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},  
+    {-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
+    {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, 
+    {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, 
+    {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+    {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0},  
+    {0.0, -1.0, 0.0}, {0.0, -1.0, 0.0}, {0.0, -1.0, 0.0}, 
+    {0.0, -1.0, 0.0}, {0.0, -1.0, 0.0}, {0.0, -1.0, 0.0}, 
+    {0.0, 0.0, -1.0}, {0.0, 0.0, -1.0}, {0.0, 0.0, -1.0}, 
+    {0.0, 0.0, -1.0}, {0.0, 0.0, -1.0}, {0.0, 0.0, -1.0},
+    {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0},
+    {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0} 
+  };
+\end{verbatim}
+\end{small}
+
+\end{document}
+This is never printed
