@@ -3,8 +3,7 @@
 
 #ifndef __MESH_H
 #define __MESH_H
-//#define  GL3_PROTOTYPES 
-//#include "gl3.h"
+
 
 #include <stdbool.h>
 
@@ -37,6 +36,8 @@ typedef struct{
   Vector2f *texels;
   unsigned int num_vertices;
 
+  // TODO: learn about vaos, what are they and why and so on.
+  GLuint vao;  // Vertex Array Object
   GLuint vertex_buffer; 
   GLuint normal_buffer;
   GLuint color_buffer;
@@ -70,6 +71,7 @@ extern void mesh_freeAttribs(Mesh *m);
 
 /* Copy all attribute data into a GPU side buffer */ 
 extern void mesh_upload(Mesh *m);
+extern void mesh_upload_prim(Mesh *m);
 
 /* Destroy completely */
 extern void mesh_destroy(Mesh *m);
@@ -77,6 +79,7 @@ extern void mesh_destroy(Mesh *m);
 /*general rendering procedure */
 extern void mesh_render(Shader *s, Mesh *m);
 extern void mesh_renderTex(Shader *s, GLuint textureID, Mesh *m);
+extern void mesh_renderTex_prim(Shader *s, GLuint textureID, Mesh *m);
 
 
 /*specialized rendering procedures */

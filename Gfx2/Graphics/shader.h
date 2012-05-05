@@ -2,10 +2,6 @@
 #ifndef __SHADER_H_
 #define __SHADER_H_
 
-
-//#define GL3_PROTOTYPES
-//#include "gl3.h"
-
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
@@ -57,7 +53,8 @@ extern void shader_uniform_i(Uniform *u,GLuint id, int *v);
 #define VERTEX_INDEX   0
 #define NORMAL_INDEX   1
 #define COLOR_INDEX    2
-#define TEXEL_INDEX    3 
+#define TEXEL_INDEX    1 // TODO: cheating
+
 
 
 typedef struct {

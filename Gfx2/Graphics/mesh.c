@@ -1,4 +1,4 @@
- 
+
 #include "mesh.h"
 
 
@@ -24,6 +24,7 @@ Mesh * mesh_init(Mesh *m) {
   m->colors   = NULL; 
   m->texels = NULL;
   
+  m->vao = 0; 
   m->vertex_buffer = 0;
   m->normal_buffer = 0;
   m->color_buffer = 0; 
@@ -102,7 +103,7 @@ void mesh_upload(Mesh *m) {
     glGenBuffers(1, &m->texel_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, m->texel_buffer);
     glBufferData(GL_ARRAY_BUFFER, 
-		 m->num_vertices*sizeof(Vector3f),
+		 m->num_vertices*sizeof(Vector2f),
 		 m->texels, 
 		 GL_STATIC_DRAW); 
   } 
@@ -130,6 +131,96 @@ void mesh_upload(Mesh *m) {
   } 
  
 }
+
+// TODO: Fix this, the vertex attribute indices needs 
+//       To be managed in some other way. 
+//       It is up to the programmer to use a matching shader.. 
+//       That is if you use a Mesh with Vertices, Normals and Texels 
+//       you must use a shader that takes the vertices at attrib 0 
+//                             that takes the normals at attrib 1 
+//                             that takes the texels at attrib 2 
+void mesh_upload_prim(Mesh *m) { 
+  
+  glGenVertexArrays(1,&m->vao);
+  glBindVertexArray(m->vao);
+  printGLError("u1");
+  if (m->vertices) {
+    glGenBuffers(1, &m->vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m->vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, 
+		 m->num_vertices*sizeof(Vector3f),
+		 m->vertices, 
+		 GL_STATIC_DRAW);
+    
+    glEnableVertexAttribArray(VERTEX_INDEX);
+    glVertexAttribPointer(VERTEX_INDEX,3,GL_FLOAT,GL_FALSE,0,(const GLvoid *)0);
+
+    printGLError("u2");
+  }
+  if (m->normals) { 
+    glGenBuffers(1, &m->normal_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m->normal_buffer);
+    glBufferData(GL_ARRAY_BUFFER, 
+		 m->num_vertices*sizeof(Vector3f),
+		 m->normals, 
+		 GL_STATIC_DRAW);
+    glEnableVertexAttribArray(NORMAL_INDEX);
+    glVertexAttribPointer(NORMAL_INDEX,3,GL_FLOAT,GL_FALSE,0,(const GLvoid *)0);
+
+    printGLError("u3");
+  } 
+  if (m->colors) { 
+    glGenBuffers(1, &m->color_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m->color_buffer);
+    glBufferData(GL_ARRAY_BUFFER, 
+		 m->num_vertices*sizeof(Vector3f),
+		 m->colors, 
+		 GL_STATIC_DRAW);
+    glEnableVertexAttribArray(COLOR_INDEX);
+    glVertexAttribPointer(COLOR_INDEX,3,GL_FLOAT,GL_FALSE,0,(const GLvoid *)0);
+
+    printGLError("u4");
+    } 
+  if (m->texels) { 
+    glGenBuffers(1, &m->texel_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m->texel_buffer);
+    glBufferData(GL_ARRAY_BUFFER, 
+		 m->num_vertices*sizeof(Vector2f),
+		 m->texels, 
+		 GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(TEXEL_INDEX);
+    glVertexAttribPointer(TEXEL_INDEX,2,GL_FLOAT,GL_FALSE,0,(const GLvoid *)0); 
+    
+    printGLError("u5");
+  } 
+  if (m->indices) { 
+    glGenBuffers(1, &m->index_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->index_buffer);
+    if (m->indices_type == GL_UNSIGNED_BYTE) {
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+		   m->num_indices*sizeof(GLubyte),
+		   m->indices, 
+		   GL_STATIC_DRAW);
+    }
+    else if (m->indices_type == GL_UNSIGNED_SHORT) {
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+		   m->num_indices*sizeof(GLushort),
+		   m->indices, 
+		   GL_STATIC_DRAW);
+    }
+    else if (m->indices_type == GL_UNSIGNED_INT) {
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+		   m->num_indices*sizeof(GLuint),
+		   m->indices, 
+		   GL_STATIC_DRAW);
+    }
+  } 
+  printGLError("u6");
+  
+  //glBindVertexArray(0);
+}
+
 
 /* -----------------------------------------------------------------------------
    renderDot. Render the vertices as dots
@@ -270,219 +361,6 @@ void mesh_renderFill(Shader *s,Mesh *m){
   
 
 }
-
-/* -----------------------------------------------------------------------------
-   renderTextured. Render the mesh with its texture. 
-   -------------------------------------------------------------------------- */
-
-/* void mesh_renderTextured(Shader *s,Mesh *m){ */
-/*   glUseProgram(s->shader); */
-  
-/*   /\* active texture unit *\/ */
-/*   if (m->textured) { */
-    
-/*     glActiveTexture(GL_TEXTURE0); */
-  
-/*     glBindTexture(GL_TEXTURE_2D, m->texture_id); */
-/*   } */
- 
-
-/*   //printf("%d\n",m->shader); */
-/*   printGLError("mesh_render:"); */
-
-/*   /\* set uniforms *\/ */
-/*   for (int i = 0; i < s->num_uniforms; ++i) { */
-/*     switch (s->uniforms[i].type) { */
-/*     case UNIFORM_UNDEFINED: */
-/*       fprintf(stderr,"mesh_render: Undefined uniform\n"); */
-/*       exit(EXIT_FAILURE); */
-/*     case UNIFORM_MAT3X3F: */
-/*       glUniformMatrix3fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m3x3f); */
-/*       break; */
-/*     case UNIFORM_MAT4X4F: */
-/*       glUniformMatrix4fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m4x4f); */
-/*       break; */
-/*     case UNIFORM_VEC3F: */
-/*       glUniform3f(s->uniforms[i].id, */
-/* 		  s->uniforms[i].data.v3f->x, */
-/* 		  s->uniforms[i].data.v3f->y, */
-/* 		  s->uniforms[i].data.v3f->z); */
-/*       break; */
-/*     case UNIFORM_VEC4F: */
-/*       glUniform4f(s->uniforms[i].id, */
-/*       		  s->uniforms[i].data.v4f->x, */
-/* 		  s->uniforms[i].data.v4f->y, */
-/* 		  s->uniforms[i].data.v4f->z, */
-/* 		  s->uniforms[i].data.v4f->w); */
-/*       break; */
-/*     case UNIFORM_INT: */
-/*       glUniform1i(s->uniforms[i].id, */
-/* 		  *s->uniforms[i].data.i); */
-/*       break; */
-/*     default:  */
-/*       fprintf(stderr,"mesh_render: Uniform fall through!\n"); */
-/*       exit(EXIT_FAILURE); */
-
-/*     } */
-    
-/*   } // uniforms should be set!  */
-/*   printGLError("mesh_render (UNIFORMS):");   */
-
-
-/*   if (SHADER_HAS_ATTRIB(s,VERTEX_INDEX)) { */
-/*     glEnableVertexAttribArray(s->attributes[VERTEX_INDEX].vattrib); */
-/*     glBindBuffer(GL_ARRAY_BUFFER, m->vertex_buffer); */
-/*     glVertexAttribPointer(s->attributes[VERTEX_INDEX].vattrib, */
-/* 			 3, GL_FLOAT, GL_FALSE,0,(void*)0); */
-/*   } */
-/*   if (SHADER_HAS_ATTRIB(s,NORMAL_INDEX)) { */
-/*      glEnableVertexAttribArray(SHADER_ATTRIB(s,NORMAL_INDEX)); */
-/*      glBindBuffer(GL_ARRAY_BUFFER, m->normal_buffer);    */
-/*      glVertexAttribPointer(SHADER_ATTRIB(s,NORMAL_INDEX), */
-/* 			   3,GL_FLOAT,GL_FALSE,0,(void*)0);  */
-/*   } */
-/*   if  (SHADER_HAS_ATTRIB(s,TEXEL_INDEX)) { */
-/*     glEnableVertexAttribArray(s->attributes[TEXEL_INDEX].vattrib); */
-    
-/*     glBindBuffer(GL_ARRAY_BUFFER, m->texel_buffer);    */
-/*     glVertexAttribPointer(s->attributes[TEXEL_INDEX].vattrib,2,GL_FLOAT,GL_FALSE,0,(void*)0); */
-/*   } */
-/*   if (SHADER_HAS_ATTRIB(s,COLOR_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,COLOR_INDEX)); */
-
-  
- 
-/*   // bind the index buffer (points out the triangles to fill)  */
-/*   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->index_buffer); */
-
-/*   //glDrawArrays(GL_POINTS,0,m->num_vertices); */
-/*   glDrawElements(GL_TRIANGLES,m->num_indices,m->indices_type,0); */
-
-
-
-
-/*   if (SHADER_HAS_ATTRIB(s,VERTEX_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,VERTEX_INDEX)); */
-/*   if (SHADER_HAS_ATTRIB(s,NORMAL_INDEX)) */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,NORMAL_INDEX)); */
-/*   if (SHADER_HAS_ATTRIB(s,TEXEL_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,TEXEL_INDEX)); */
-/*   if (SHADER_HAS_ATTRIB(s,COLOR_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,COLOR_INDEX)); */
-
-/*   // printGLError("mesh_render D:");   */
-/*   //glDisableVertexAttribArray(s->attributes[VERTEX_INDEX].vattrib); */
-/*   //if ( */
-/*   //glDisableVertexAttribArray(s->attributes[TEXEL_INDEX].vattrib); */
-/*   //printGLError("mesh_render:"); */
-  
-
-/* } */
-
-/*
-  An attempt at a general method of mesh rendering 
-  You should be able to connect many different shaders 
-  to many different meshes using this approach. 
-*/
-
-/* void mesh_renderTexturedLit(Shader *s,Mesh *m){ */
-/*   glUseProgram(s->shader); */
-  
-/*   /\* Just assumes a texture ??  *\/ */
-/*   glActiveTexture(GL_TEXTURE0); */
-  
-/*   glBindTexture(GL_TEXTURE_2D, m->texture_id); */
-
-/*   printGLError("mesh_render:"); */
-
-/*   /\* set uniforms *\/ */
-/*   for (int i = 0; i < s->num_uniforms; ++i) { */
-/*     switch (s->uniforms[i].type) { */
-/*     case UNIFORM_UNDEFINED: */
-/*       fprintf(stderr,"mesh_render: Undefined uniform\n"); */
-/*       exit(EXIT_FAILURE); */
-/*     case UNIFORM_MAT3X3F: */
-/*       glUniformMatrix3fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m3x3f); */
-/*       break; */
-/*     case UNIFORM_MAT4X4F: */
-/*       glUniformMatrix4fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m4x4f); */
-/*       break; */
-/*     case UNIFORM_VEC3F: */
-/*       glUniform3f(s->uniforms[i].id, */
-/* 		  s->uniforms[i].data.v3f->x, */
-/* 		  s->uniforms[i].data.v3f->y, */
-/* 		  s->uniforms[i].data.v3f->z); */
-/*       break; */
-/*     case UNIFORM_VEC4F: */
-/*       glUniform4f(s->uniforms[i].id, */
-/*       		  s->uniforms[i].data.v4f->x, */
-/* 		  s->uniforms[i].data.v4f->y, */
-/* 		  s->uniforms[i].data.v4f->z, */
-/* 		  s->uniforms[i].data.v4f->w); */
-/*       break; */
-/*     case UNIFORM_INT: */
-/*       glUniform1i(s->uniforms[i].id, */
-/* 		  *s->uniforms[i].data.i); */
-/*       break; */
-/*     default:  */
-/*       /\* Silently fall through *\/ */
-/*       break; */
-/*     } */
-    
-/*   } // uniforms should be set!  */
-/*   printGLError("mesh_render (UNIFORMS):");   */
-
-/*   /\* VERTICES *\/ */
-/*   if (SHADER_HAS_ATTRIB(s,VERTEX_INDEX)) { */
-/*     glEnableVertexAttribArray(SHADER_ATTRIB(s,VERTEX_INDEX)); */
-/*     glBindBuffer(GL_ARRAY_BUFFER, m->vertex_buffer); */
-/*     glVertexAttribPointer(SHADER_ATTRIB(s,VERTEX_INDEX), */
-/* 			  3, GL_FLOAT, GL_FALSE,0,(void*)0); */
-/*   } */
-  
-/*   /\* TEXTURE COORDS *\/    */
-/*   if (SHADER_HAS_ATTRIB(s,TEXEL_INDEX)) { */
-/*     glEnableVertexAttribArray(SHADER_ATTRIB(s,TEXEL_INDEX)); */
-    
-/*     glBindBuffer(GL_ARRAY_BUFFER, m->texel_buffer);    */
-/*     glVertexAttribPointer(SHADER_ATTRIB(s,TEXEL_INDEX), */
-/* 			  2,GL_FLOAT,GL_FALSE,0,(void*)0); */
-/*   } */
-  
-/*   /\* NORMALS *\/ */
-/*   if (SHADER_HAS_ATTRIB(s,NORMAL_INDEX)) { */
-/*     glEnableVertexAttribArray(SHADER_ATTRIB(s,NORMAL_INDEX)); */
-/*     glBindBuffer(GL_ARRAY_BUFFER, m->normal_buffer);    */
-/*     glVertexAttribPointer(SHADER_ATTRIB(s,NORMAL_INDEX), */
-/* 			  3,GL_FLOAT,GL_FALSE,0,(void*)0); */
-/*   } */
-
-/*   /\* COLORS *\/ */
-/*   if (SHADER_HAS_ATTRIB(s,COLOR_INDEX)) { */
-/*     glEnableVertexAttribArray(SHADER_ATTRIB(s,COLOR_INDEX)); */
-/*     glBindBuffer(GL_ARRAY_BUFFER, m->color_buffer);    */
-/*     glVertexAttribPointer(SHADER_ATTRIB(s,COLOR_INDEX), */
-/* 			  3,GL_FLOAT,GL_FALSE,0,(void*)0); */
-/*   } */
-
-
-/*   // bind the index buffer (points out the triangles to fill)  */
-/*   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->index_buffer); */
-
-/*   glDrawElements(GL_TRIANGLES,m->num_indices,m->indices_type,0); */
-
-  
-/*   if (SHADER_HAS_ATTRIB(s,VERTEX_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,VERTEX_INDEX)); */
-/*   if (SHADER_HAS_ATTRIB(s,NORMAL_INDEX)) */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,NORMAL_INDEX)); */
-/*   if (SHADER_HAS_ATTRIB(s,TEXEL_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,TEXEL_INDEX)); */
-/*   if (SHADER_HAS_ATTRIB(s,COLOR_INDEX))  */
-/*     glDisableVertexAttribArray(SHADER_ATTRIB(s,COLOR_INDEX)); */
-
-/* } */
-/* *\/ */
 
 void mesh_renderFillLit(Shader *s,Mesh *m){
   glUseProgram(s->shader);  
@@ -690,6 +568,73 @@ void mesh_render(Shader *s, Mesh *m){
 }
 
 
+void mesh_renderTex_prim(Shader *s,GLuint textureID, Mesh *m){
+  printGLError("mesh_render (BEFORE USEPROGRAM):");
+  glUseProgram(s->shader);
+
+  printGLError("mesh_render (USEPROGRAM):");
+  /* ACTIVATE TEXTURING */
+  
+  glActiveTexture(GL_TEXTURE0);
+  
+  printGLError("mesh_render (TEXTURE1):");
+  glBindTexture(GL_TEXTURE_2D, textureID);
+
+  printGLError("mesh_render (TEXTURE2):");
+  
+
+  /* set uniforms */
+  for (int i = 0; i < s->num_uniforms; ++i) {
+    switch (s->uniforms[i].type) {
+    case UNIFORM_UNDEFINED:
+      fprintf(stderr,"mesh_render: Undefined uniform\n");
+      exit(EXIT_FAILURE);
+    case UNIFORM_MAT3X3F:
+      glUniformMatrix3fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m3x3f);
+      printGLError("mesh_render (MAT3X3): ");  
+      break;
+    case UNIFORM_MAT4X4F:
+      glUniformMatrix4fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m4x4f);
+      printGLError("mesh_render (MAT4X4):");  
+      break;
+    case UNIFORM_VEC3F:
+      glUniform3f(s->uniforms[i].id,
+		  s->uniforms[i].data.v3f->x,
+		  s->uniforms[i].data.v3f->y,
+		  s->uniforms[i].data.v3f->z);
+      printGLError("mesh_render (VEC3):");  
+      break;
+    case UNIFORM_VEC4F:
+      glUniform4f(s->uniforms[i].id,
+      		  s->uniforms[i].data.v4f->x,
+		  s->uniforms[i].data.v4f->y,
+		  s->uniforms[i].data.v4f->z,
+		  s->uniforms[i].data.v4f->w);
+      printGLError("mesh_render (VEC4):");  
+      break;
+    case UNIFORM_INT:
+      glUniform1i(s->uniforms[i].id,
+		  *s->uniforms[i].data.i);
+      printGLError("mesh_render (INT):");  
+      break;
+    default: 
+      /* Silently fall through */
+      break;
+    }
+    
+  } // uniforms should be set! 
+  printGLError("mesh_render (UNIFORMS):");  
+
+  
+  glBindVertexArray(m->vao);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->index_buffer);
+  glDrawElements(GL_TRIANGLES,m->num_indices,m->indices_type,0);
+
+  
+  
+ 
+}
+
 void mesh_renderTex(Shader *s,GLuint textureID, Mesh *m){
   glUseProgram(s->shader);
 
@@ -754,6 +699,7 @@ void mesh_renderTex(Shader *s,GLuint textureID, Mesh *m){
     printGLError("mesh_render (VERTICES1):");  
     glBindBuffer(GL_ARRAY_BUFFER, m->vertex_buffer);
     printGLError("mesh_render (VERTICES2):");  
+    
     glVertexAttribPointer(SHADER_ATTRIB(s,VERTEX_INDEX),
 			  3, GL_FLOAT, GL_FALSE,0,(void*)0);
     printGLError("mesh_render (VERTICES3):");  

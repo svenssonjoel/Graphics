@@ -306,7 +306,7 @@ void shapes_flatMesh(Vector3f *v_data,
     u = 0.0f;
     x = (float)-whalf;
   }
-
+  
   index = 0; 
   for (int j = 0; j < d-1; ++j) {  
     for (int i = 0; i < w-1; ++i) {
@@ -325,7 +325,7 @@ void shapes_flatMesh(Vector3f *v_data,
      
     }
   }
-
+  //printf("Num Indices created: %d\n",index);
 
 }
 

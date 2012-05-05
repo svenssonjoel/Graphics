@@ -87,22 +87,25 @@ void renderWall(float px, float pz) {
   memcpy(tmp,modelViewMatrix,sizeof(Mat4x4f));
   
   matrix_translate4x4f(modelViewMatrix,px,10,pz);
-  mesh_renderTex(&tmap_shader,texture2,wall_mesh);
+  mesh_renderTex_prim(&tmap_shader,texture2,wall_mesh);
 
   matrix_rotate4x4f(modelViewMatrix,pi/2.0,0,1,0);
   matrix_translate4x4f(modelViewMatrix,-10,0,10);
-  mesh_renderTex(&tmap_shader,texture2,wall_mesh);
+  mesh_renderTex_prim(&tmap_shader,texture2,wall_mesh);
   
   matrix_rotate4x4f(modelViewMatrix,pi,0,1,0);
   matrix_translate4x4f(modelViewMatrix,0,0,20);
-  mesh_renderTex(&tmap_shader,texture2,wall_mesh);
+  mesh_renderTex_prim(&tmap_shader,texture2,wall_mesh);
 
   matrix_rotate4x4f(modelViewMatrix,-pi/2,0,1,0);
   matrix_translate4x4f(modelViewMatrix,10,0,10);
-  mesh_renderTex(&tmap_shader,texture2,wall_mesh);
+  mesh_renderTex_prim(&tmap_shader,texture2,wall_mesh);
 
  
   memcpy(modelViewMatrix,tmp,sizeof(Mat4x4f));
+   
+  
+
 } 
 
 void renderWorld(int w, int h, unsigned char *world){
@@ -149,8 +152,12 @@ void initMeshes() {
 		  20.0f,20.0f, // step size
 		  1); 
 
-  mesh_upload(cube_mesh);
-  mesh_freeAttribs(cube_mesh);
+  //printGLError("before upload");
+  mesh_upload_prim(cube_mesh); 
+  //printGLError("upload");
+  //mesh_freeAttribs(cube_mesh);
+  //printGLError("freeattribs");
+
 
   wall_mesh = mesh_create();
   mesh_allocateAttribs(wall_mesh,
@@ -167,9 +174,9 @@ void initMeshes() {
 	      wall_mesh->indices,
 	      10,10);
   
-  mesh_upload(wall_mesh);
+  mesh_upload_prim(wall_mesh);
   mesh_freeAttribs(wall_mesh);
-  
+  //printGLError("before leaving initmeshes");  
 }
 
 // --------------------------------------------------------------------------
@@ -183,7 +190,8 @@ void initShaders() {
   GLuint shader_proj;
   GLuint shader_mod;
   GLuint shader_texSampler;
-
+  
+  printGLError("initShaders0");
   
   v = shader_load("Shaders/tex_simple.vert",GL_VERTEX_SHADER);
   f = shader_load("Shaders/tex_simple.frag",GL_FRAGMENT_SHADER);
@@ -192,25 +200,32 @@ void initShaders() {
 
   glCompileShader(v);
   glCompileShader(f);
+  shader_printCompileLog(v);
+  shader_printCompileLog(f);
+
   printGLError("initShaders2");
   p = glCreateProgram();
   glAttachShader(p,v);
+  printGLError("initShaders3a");
   glAttachShader(p,f);
+  printGLError("initShaders3b");
   glLinkProgram(p);
-  //glUseProgram(p);
-  printGLError("initShaders3");
+  printGLError("initShaders3c");
+  glUseProgram(p);
+  printGLError("initShaders3d");
 
 
 
   shader_proj = glGetUniformLocation(p, "proj");
+  printGLError("initShaders4");
   shader_mod  = glGetUniformLocation(p, "mod");
-
+  printGLError("initShaders5");
   shader_texSampler = glGetUniformLocation(p,"tex"); 
- 
+  printGLError("initShaders6");
   shader_vindex = glGetAttribLocation(p, "Vertex");  
-
+  printGLError("initShaders7");
   shader_tindex = glGetAttribLocation(p, "TexCoord0");  
-  
+  printGLError("initShaders8");
   tmap_shader_unis[0].type = UNIFORM_MAT4X4F;
   tmap_shader_unis[0].id   = shader_proj;
   tmap_shader_unis[0].data.m4x4f = &projectionMatrix;
@@ -234,7 +249,8 @@ void initShaders() {
   tmap_shader.attributes[TEXEL_INDEX].active = true;
   tmap_shader.attributes[NORMAL_INDEX].active = false;
   tmap_shader.attributes[COLOR_INDEX].active = false;
-   
+  printf("%d %d\n", shader_vindex, shader_tindex);
+  printf("%d %d\n", VERTEX_INDEX, TEXEL_INDEX);
   
 }
 
@@ -261,16 +277,16 @@ void display(void) {
   
   //renderWall(25,25);
   
- 
-  mesh_renderTex(&tmap_shader,texture1,cube_mesh);
+  printGLError("before render");
+  
+  //floor?
+  mesh_renderTex_prim(&tmap_shader,texture1,cube_mesh);
  
   matrix_translate4x4f(modelViewMatrix,0,0,-200);
   renderWorld(8,8,world);
 
 
   
-  // 
-  //  mesh_renderTex(&tmap_shader,texture1,wall_mesh);
   
   
 
@@ -331,7 +347,7 @@ void init(void)
   
 
   
-  printf("texture, %d\n",texture1); 
+  printf("Texture: %d\n",texture1); 
   //initTexture2D(texture1, 512,512, GL_RGBA, img->data);
   texture_init2DGenMip(texture1,512,512,GL_RGBA, img->data);
   glTexParameteri(GL_TEXTURE_2D,
@@ -356,9 +372,9 @@ void init(void)
   
   
   initMeshes();
-  
+   printGLError("after initMeshes");
   initShaders();
-
+   printGLError("after initShaders");
 
 
   
@@ -449,7 +465,7 @@ int main(int argc, char **argv) {
   // OpenGL
   glutInitContextVersion(3,2);
   //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
-  // glutInitContextProfile(GLUT_CORE_PROFILE);
+  //glutInitContextProfile(GLUT_CORE_PROFILE);
   printGLError("InitVersion:");
 
   glutSetOption(
