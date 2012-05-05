@@ -506,21 +506,23 @@ void display(void) {
  
   
   //multimesh_renderFillLit(&shader1,&mausoleum);
-  
+  /*
   for (int i = 0; i < 9; i ++) {
     mausoleum.meshes[i].texture_id = shadowMapTexture;
     mausoleum.meshes[i].textured = true;
     
   }
-  mesh_renderTextured(&shader1,&mausoleum.meshes[0]);
-  mesh_renderTextured(&shader1,&mausoleum.meshes[1]);
-  mesh_renderTextured(&shader1,&mausoleum.meshes[2]);  
-  mesh_renderTextured(&shader1,&mausoleum.meshes[3]);
-  mesh_renderTextured(&shader1,&mausoleum.meshes[4]);
-  mesh_renderTextured(&shader1,&mausoleum.meshes[5]);
-  mesh_renderTextured(&shader1,&mausoleum.meshes[6]);
-  mesh_renderTextured(&shader1,&mausoleum.meshes[7]); 
-  mesh_renderTextured(&shader1,&mausoleum.meshes[8]); 
+  */ 
+
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[0]);
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[1]);
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[2]);  
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[3]);
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[4]);
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[5]);
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[6]);
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[7]); 
+  mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[8]); 
   
   Vector3f v1 = {0.0,0.0,0.0 };
   Vector3f v2 = {100.0,100.0,100.0 };
@@ -547,8 +549,8 @@ void display(void) {
   matrix_identity4x4f(modelViewMatrix);
   matrix_translate4x4f(modelViewMatrix,256,256,0.0);
   //matrix_scale4x4f(modelViewMatrix,0.25,0.25,0.25);
-  quad.texture_id = tt;
-  mesh_renderTexturedLit(&shader2,&quad);
+  // quad.texture_id = tt;
+  mesh_renderTex_prim(&shader2,tt,&quad);
 
   
  
@@ -602,7 +604,10 @@ void init(void)
 
   multimesh_load3ds(&mausoleum, "mausoleum.3ds", MESH_LOAD_NORMALS);// | MESH_LOAD_TEXELS);  
   
-  multimesh_upload(&mausoleum);    
+  //multimesh_upload(&mausoleum);    
+  for (int i = 0; i < 9; i ++) {
+    mesh_upload_prim(&mausoleum.meshes[i]);
+  }
     
   
   /* 
@@ -623,10 +628,10 @@ void init(void)
   quad.indices = quadindices;
   quad.num_indices = 6;
   quad.indices_type = GL_UNSIGNED_BYTE;
-  quad.textured = true;
-  quad.texture_id = tt;
+  //quad.textured = true;
+  //quad.texture_id = tt;
   
-  mesh_upload(&quad);
+  mesh_upload_prim(&quad);
   
   /* 
      
