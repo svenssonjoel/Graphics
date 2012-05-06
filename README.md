@@ -1,4 +1,0 @@
-Graphics
-========
-
-Graphics hobby projects

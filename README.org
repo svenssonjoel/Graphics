@@ -1,0 +1,24 @@
+* Graphics
+  + Graphics hobby projects
+
+
+* Examples 
+  Currently only a few of these examples are in working order. This is 
+  because of a change to the graphics library. 
+
+  + dungeon
+    is working ok. 
+  + feigenbaum
+    working
+  + ground_mesh
+  + info3ds
+    working
+  + show_feig 
+  + simple2d
+  + space
+  + space2 
+  + view3ds
+    working but buggy. 
+  + viewmd2 
+ 
+* 
