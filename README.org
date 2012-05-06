@@ -1,6 +1,6 @@
 * Graphics
   + Graphics hobby projects
-
+  + Gfx2 is the active project. 
 
 * Examples 
   Currently only a few of these examples are in working order. This is 
@@ -18,4 +18,21 @@
   + view3ds: working but buggy. 
   + viewmd2 
  
-* 
+* Gfx2/Graphics
+  + diff_ms.h: Timing helpers/utils
+  + error.c/h: Print OpenGL error messages
+  + frame.c/h: Frames to transforms
+  + image.c/h: Image loading and storing (supports RAW and PNG using libpng). 
+    Also contains a set of 2d painting functions on images. 
+  + matrix.c/h: Matrix library. Newer versions of OpenGL does not provide 
+    matrix manipulation functionality. 
+  + md2.c/h: Provides md2 loading and rendering (NEEDS TO BE UPDATED TO WORK) 
+  + mesh.c/h: Meshes, collections of triangles that can be rendered in one "go".
+  + multimesh.c/h: A wrapper around mesh to handle many "related" meshes at once. 
+  + shader.c/h: Load and compile GLSL shaders.
+  + shapes.c/h: Tools to generate some simple shapes.
+  + sse_detect.h: Helpers if you want to detect SSE 
+  + text.c/h: Put text on Images. 
+  + texture.c/h: Helpers to manage OpenGL textures. 
+  + tools.c/h: Currently only contains a drawLine function.. 
+  + vector.c/h: 2D/3D vector library
