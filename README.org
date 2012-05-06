@@ -11,7 +11,7 @@
   + ground_mesh
   + info3ds
     working
-  + show_feig 
+  + show_feig: Not working, shaders missing?
   + simple2d
   + space
   + space2 
@@ -28,7 +28,7 @@
     matrix manipulation functionality. 
   + md2.c/h: Provides md2 loading and rendering (NEEDS TO BE UPDATED TO WORK) 
   + mesh.c/h: Meshes, collections of triangles that can be rendered in one "go".
-  + multimesh.c/h: A wrapper around mesh to handle many "related" meshes at once. 
+  + multimesh.c/h: A wrapper around mesh to handle many "related" meshes at once. (NEEDS TO BE UPDATED TO WORK)
   + shader.c/h: Load and compile GLSL shaders.
   + shapes.c/h: Tools to generate some simple shapes.
   + sse_detect.h: Helpers if you want to detect SSE 
@@ -36,3 +36,36 @@
   + texture.c/h: Helpers to manage OpenGL textures. 
   + tools.c/h: Currently only contains a drawLine function.. 
   + vector.c/h: 2D/3D vector library
+
+* Meshes 
+  
+  A collection of vertices,normals,colors,texels and a set of indices 
+  that point out how those form triangles. 
+  
+  Uses OpenGL VBOs (Vertex Buffer Objects) for rendering. This means that 
+  the data is stored in GPU memory. 
+  
+  Also a VAO (Vertex Array Object) is used to manage the VBOs. This is right
+  now causing some problems in my understanding of OpenGL, It seems to me that 
+  once you have created a VAO the kind of Shaders you can use to render the data  
+  is limited. The shader used MUST be compatible with the VAO in the sence that 
+  if the VAO has vertices as attrib 0 the shader must accept vertices at attrib 0. 
+  Feels like this should be captured in "types", of the VAO and shader.. 
+
+  Thoughts.. Maybe I should split up meshes slightly and have a new kind 
+  of mesh that creates the VAO at the render call. This version could match 
+  up the attributes to the shader supplied and render. Slightly more general 
+  I guess. Then another kind of mesh could be compiled into a VAO and 
+  from that point on only be used with entirely compatible shaders, but more
+  efficiently so... 
+
+
+* Different GL buffers 
+ 
+  + VBO: a Vertex Buffer Object can hold for example vertices,normals...
+  + VAO: a bunch of VBOs can be composed into a VAO. The VAO contains almost
+     all the info needed to render the data. A single function call is needed 
+     to render the Object stored in the VBOs under the VAO. 
+     if glDrawElements is used then a GL_ELEMENT_ARRAY_BUFFER is also needed. 
+  + GL_ELEMENT_ARRAY_BUFFER: contains a set of indices. 
+  

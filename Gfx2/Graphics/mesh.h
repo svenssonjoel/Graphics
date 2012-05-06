@@ -16,13 +16,7 @@
    Whats a mesh, 
     A bunch of triangles that in some way "belong" together.
       
-   TODO: 
-    There should be more separation between a mesh and how to render it. 
-     # attempting to resolve this using the "Shader" structure defined below.
-     # if this division works, Shader should be moved to its own file. 
-     
-   
- */
+*/
 
 
 /* -----------------------------------------------------------------------------
