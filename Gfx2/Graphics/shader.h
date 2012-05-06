@@ -12,9 +12,8 @@
    UNIFORMS (a shader concept)
    -------------------------------------------------------------------------- */
 
-//#define MAX_UNIFORMS 10
-//#define NUM_MATRICES 
 
+// Uniform types. 
 #define UNIFORM_UNDEFINED   0
 #define UNIFORM_MAT3X3F     1
 #define UNIFORM_MAT4X4F     2
@@ -49,13 +48,11 @@ extern void shader_uniform_i(Uniform *u,GLuint id, int *v);
 /* -----------------------------------------------------------------------------
    VERTEX ATTRIBUTES (a shader concept)
    -------------------------------------------------------------------------- */
-
+// TODO: a bit misguided here, figure it out and make it work. 
 #define VERTEX_INDEX   0
 #define NORMAL_INDEX   1
 #define COLOR_INDEX    2
 #define TEXEL_INDEX    1 // TODO: cheating
-
-
 
 typedef struct {
   GLuint vattrib;

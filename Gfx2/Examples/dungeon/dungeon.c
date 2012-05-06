@@ -209,12 +209,25 @@ void initShaders() {
   printGLError("initShaders3a");
   glAttachShader(p,f);
   printGLError("initShaders3b");
+  
   glLinkProgram(p);
   printGLError("initShaders3c");
+
+  glBindAttribLocation(p,0,"TexCoord0");
+  glBindAttribLocation(p,1,"Vertex");
+ 
+  glLinkProgram(p);
+  printGLError("initShaders3c");
+ 
+  glBindAttribLocation(p,1,"TexCoord0");
+  glBindAttribLocation(p,0,"Vertex");
+ 
+  glLinkProgram(p);
+  printGLError("initShaders3c");
+ 
   glUseProgram(p);
   printGLError("initShaders3d");
-
-
+  
 
   shader_proj = glGetUniformLocation(p, "proj");
   printGLError("initShaders4");
@@ -251,6 +264,24 @@ void initShaders() {
   tmap_shader.attributes[COLOR_INDEX].active = false;
   printf("%d %d\n", shader_vindex, shader_tindex);
   printf("%d %d\n", VERTEX_INDEX, TEXEL_INDEX);
+
+  
+   /* Experiment */
+  char info[256];
+  int l;
+  int s;
+  GLenum t;
+
+  int num_attribs = 0;
+  glGetProgramiv(p,GL_ACTIVE_ATTRIBUTES,&num_attribs);
+  printf("active attribs: %d\n",num_attribs); 
+
+  for (int i = 0; i < num_attribs; i ++) { 
+    glGetActiveAttrib(p,i,256,&l,&s,&t,info);
+    printf("attrib: %s %d %d %d\n",info,l,s,t);
+  }
+  /* Experiment ends */
+
   
 }
 
