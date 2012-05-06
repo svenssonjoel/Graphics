@@ -2,7 +2,6 @@
 #ifndef _TEXTURE_H
 #define _TEXTURE_H
 
-// #include "gl3.h"
 #include "image.h"
 
 

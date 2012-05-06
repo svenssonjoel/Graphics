@@ -397,7 +397,7 @@ void setShaders() {
 void display(void) {     
   
   printGLError("display Start :");    
-  fprintf(stderr,"running display\n");
+  // fprintf(stderr,"running display\n");
 
   Vector3f pos;
   Vector3f la; 
@@ -489,8 +489,9 @@ void display(void) {
 
  
   for (int i = 0; i <9; ++i) {
-    mausoleum.meshes[i].textured = false;
-    mesh_render(&shaderShadow,&mausoleum.meshes[i]);
+    //mausoleum.meshes[i].textured = false;
+    // TODO: FIX !!! 
+    mesh_renderTex_prim(&shaderShadow,0,&mausoleum.meshes[i]);
   }
   
   matrix_rotate4x4f(modelViewMatrix,robr,0.0,1.0,0.0);
@@ -593,9 +594,9 @@ void display(void) {
   //multimesh_renderFillLit(&shader1,&mausoleum);
   
   for (int i = 0; i < 9; i ++) {
-    mausoleum.meshes[i].texture_id = shadowMapTexture;
-    mausoleum.meshes[i].textured = true;
-    mesh_render(&shader1,&mausoleum.meshes[i]);
+    //    mausoleum.meshes[i].texture_id = shadowMapTexture;
+    // mausoleum.meshes[i].textured = true;
+    mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[i]);
   }
   //  printGLError("display 15a :");       
   //mesh_render(&shader1,&mausoleum.meshes[0]);
@@ -715,7 +716,10 @@ void init(void)
   // multimesh_load3ds(&mausoleum, "cube.3ds", MESH_LOAD_NORMALS | MESH_LOAD_TEXELS);
   
   
-  multimesh_upload(&mausoleum);    
+  //multimesh_upload(&mausoleum);    
+  for (int i = 0; i < 9; i ++) {
+    mesh_upload_prim(&mausoleum.meshes[i]);
+  }
     
   
   /* 

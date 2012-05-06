@@ -185,8 +185,8 @@ void initBuffer(void) {
 // -----------------------------------------------------------------------------
 void setShaders() {
 		
-  v = shader_load("Shaders/show_image_mv.vert",GL_VERTEX_SHADER);
-  f = shader_load("Shaders/show_image_mv.frag",GL_FRAGMENT_SHADER);
+  v = shader_load("Shaders/tex_simple.vert",GL_VERTEX_SHADER);
+  f = shader_load("Shaders/tex_simple.frag",GL_FRAGMENT_SHADER);
 
   glCompileShader(v);
   shader_printCompileLog(v);
@@ -212,17 +212,9 @@ void setShaders() {
    
   printGLError("setShader3:");
   vertexIndex     = glGetAttribLocation(p, "Vertex");  
-  printGLError("setShader4:");
-  glEnableVertexAttribArray(vertexIndex);
-  printGLError("setShader5:");
-
-
 
   printGLError("setShader5:");
   tcIndex     = glGetAttribLocation(p, "TexCoord0");  
-  printGLError("setShader6:");
-  glEnableVertexAttribArray(tcIndex);
-  printGLError("setShader7:");
 
 
 }
@@ -242,8 +234,16 @@ void drawQuad(void) {
   glUniformMatrix4fv(projMatrixIndex, 1, GL_FALSE, projectionMatrix);
   glUniformMatrix4fv(modMatrixIndex, 1, GL_FALSE,  modelViewMatrix);
 
+  // creating a VAO just in time... 
+  GLuint vao;
+  glGenVertexArrays(1,&vao);
+  glBindVertexArray(vao);
+
+  // enable attributes..
+  glEnableVertexAttribArray(vertexIndex);
+  glEnableVertexAttribArray(tcIndex);
   
-  
+
   glBindBuffer(GL_ARRAY_BUFFER, quadBufName);
 
   glVertexAttribPointer(tcIndex,2, GL_FLOAT, GL_FALSE,
