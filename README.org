@@ -6,10 +6,8 @@
   Currently only a few of these examples are in working order. This is 
   because of a change to the graphics library. 
 
-  + dungeon
-    is working ok. 
-  + feigenbaum
-    working
+  + dungeon: is working ok. 
+  + feigenbaum: working
   + ground_mesh
   + info3ds
     working
@@ -17,8 +15,7 @@
   + simple2d
   + space
   + space2 
-  + view3ds
-    working but buggy. 
+  + view3ds: working but buggy. 
   + viewmd2 
  
 * 
