@@ -9,14 +9,13 @@
   + dungeon: is working ok. 
   + feigenbaum: working
   + ground_mesh
-  + info3ds
-    working
+  + info3ds: working
   + show_feig: working 
   + simple2d
   + space
   + space2 
-  + view3ds: working but buggy. (SHADOWMAPPING is broken)
-  + viewmd2: working but buggy. (SHADOWMAPPING is broken)'
+  + view3ds: working but with bugs. (SHADOWMAPPING is broken)
+  + viewmd2: working but with bugs. (SHADOWMAPPING is broken)'
   + TODO: a stand alone shadowmapping example (as simple as possible) 
  
 * Gfx2/Graphics
