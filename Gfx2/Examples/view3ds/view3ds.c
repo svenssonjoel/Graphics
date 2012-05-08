@@ -161,9 +161,6 @@ void createShadowMap() {
 // -----------------------------------------------------------------------------
 void setShaders() {
 	
-  char *vs,*fs;
-       
-  
   GLuint shader_frag;
   GLuint shader_vert; 
   GLuint shader_program;
@@ -207,7 +204,9 @@ void setShaders() {
 		
   glAttachShader(shader_program,shader_vert); 
   glAttachShader(shader_program,shader_frag);
-
+  
+  glBindAttribLocation(shader_program,0,"Vertex");
+  glBindAttribLocation(shader_program,2,"Normal");
 
   glLinkProgram(shader_program); 
      
@@ -233,18 +232,18 @@ void setShaders() {
   shader_uniform_v4f  (&shader1_unis[2],shader_color,&color);
   shader_uniform_v3f  (&shader1_unis[3],shader_lightpos,VECTOR_SUB3F(&lightsource));
   shader_uniform_m3x3f(&shader1_unis[4],shader_normal_matrix,&normalMatrix);
-  shader_uniform_i    (&shader1_unis[5],shader_shadowTexture,&texunit);//&shadowMapTexture);
+  shader_uniform_i    (&shader1_unis[5],shader_shadowTexture,(int*)&texunit);//&shadowMapTexture);
   shader_uniform_m4x4f(&shader1_unis[6],shader_shadowMatrix,&shadowMatrix);
   
   shader1.uniforms = shader1_unis;
   shader1.num_uniforms = 7; 
   
   shader1.shader   = shader_program;
-  shader1.attributes[VERTEX_INDEX].vattrib = shader_vindex;
-  shader1.attributes[VERTEX_INDEX].active = true;
+  //shader1.attributes[VERTEX_INDEX].vattrib = shader_vindex;
+  //shader1.attributes[VERTEX_INDEX].active = true;
   
-  shader1.attributes[NORMAL_INDEX].vattrib = shader_nindex;
-  shader1.attributes[NORMAL_INDEX].active = true;
+  //shader1.attributes[NORMAL_INDEX].vattrib = shader_nindex;
+  // shader1.attributes[NORMAL_INDEX].active = true;
 
   /* setup texturing shader ---------------------------------------------------------------------- */
 
@@ -266,6 +265,9 @@ void setShaders() {
   glAttachShader(shader_program,shader_vert);
   glAttachShader(shader_program,shader_frag);
 
+  glBindAttribLocation(shader_program,0,"Vertex");
+  glBindAttribLocation(shader_program,1,"TexCoord0");
+
   glLinkProgram(shader_program); 
      
    
@@ -284,7 +286,7 @@ void setShaders() {
   shader_uniform_m4x4f(&shader2_unis[0],shader_proj,&projectionMatrix);
   shader_uniform_m4x4f(&shader2_unis[1],shader_mod,&modelViewMatrix);
   //shader_uniform_v4f  (&shader1_unis[2],shader_color,&color);
-  shader_uniform_i(&shader2_unis[2],shader_texSampler,&texunit);
+  shader_uniform_i(&shader2_unis[2],shader_texSampler,(int*)&texunit);
 
   shader2.uniforms = shader2_unis;
   shader2.num_uniforms = 3; 
@@ -417,6 +419,9 @@ void display(void) {
  
   matrix_lookAtf(modelViewMatrix,&pos, &la  ,&up); 
  
+  // Does this call work.  
+  // I must be leaving some VAO bound here! 
+  // bug warning...
   multimesh_renderFill(&shaderShadow,&mausoleum);
 
   
@@ -525,7 +530,7 @@ void display(void) {
   mesh_renderTex_prim(&shader1,shadowMapTexture,&mausoleum.meshes[8]); 
   
   Vector3f v1 = {0.0,0.0,0.0 };
-  Vector3f v2 = {100.0,100.0,100.0 };
+  //Vector3f v2 = {100.0,100.0,100.0 };
   Vector3f c = {1.0,0.0,0.0};
 
   tools_drawLine(basic_shader,&v1,VECTOR_SUB3F(&lightsource1),&c);
@@ -595,7 +600,7 @@ void reshape(int w, int h) {
 void init(void)
 {
    
-  Image *img;  
+  //Image *img;  
    
   glEnable(GL_CULL_FACE);
   //glCullFace(GL_BACK);  
@@ -628,18 +633,10 @@ void init(void)
   quad.indices = quadindices;
   quad.num_indices = 6;
   quad.indices_type = GL_UNSIGNED_BYTE;
-  //quad.textured = true;
-  //quad.texture_id = tt;
   
   mesh_upload_prim(&quad);
-  
-  /* 
-     
-   */ 
-
 
   createShadowMap();
-
 
   setShaders(); 
   basic_shader = shader_basic(&modelViewMatrix,&projectionMatrix);
@@ -762,7 +759,7 @@ void mouse(int button, int state, int x, int y) {
   
   int wx;
   int wy; 
-  static int active = 1;
+  // static int active = 1;
   if (state == GLUT_DOWN) {
     wx =  x; 
     wy =  y;  
@@ -785,8 +782,8 @@ void idle(){
 // -----------------------------------------------------------------------------
 int main(int argc, char **argv) {
  
-  int v = 0;
-  int m = 0; 
+  // int v = 0;
+  // int m = 0; 
   
   //Initialize glut
   glutInit(&argc,argv);

@@ -23,6 +23,7 @@
 #define UNIFORM_VEC4F_ARRAY 6
 #define UNIFORM_INT         7
 #define UNIFORM_FLOAT       8
+#define UNIFORM_UINT        9
 
 
 typedef struct {
