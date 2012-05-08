@@ -69,3 +69,7 @@
      if glDrawElements is used then a GL_ELEMENT_ARRAY_BUFFER is also needed. 
   + GL_ELEMENT_ARRAY_BUFFER: contains a set of indices. 
   
+
+*TODO: 
+  + Learn more about shaders and vertex attributes. Make the mesh rendering 
+    routines "work" again. 
