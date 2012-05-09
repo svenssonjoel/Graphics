@@ -52,7 +52,32 @@ typedef struct{
                          // GL_UNSIGNED_SHORT, 
                          // GL_UNSIGNED_INT
                          // and so on 
-} Mesh;  
+} Mesh;
+
+//Work in progress 
+typedef struct { 
+  GLuint vao; 
+
+  GLuint index_buffer; 
+  unsigned char *indices; 
+  unsigned int   num_indices;
+  GLenum         indices_type; 
+} CMeshVAO; 
+
+typedef struct { 
+  
+  GLuint vertex_buffer; 
+  GLuint normal_buffer;
+  GLuint color_buffer;
+  GLuint texel_buffer;
+  GLuint index_buffer;
+
+  unsigned char *indices; 
+  unsigned int num_indices;
+  
+  GLenum   indices_type; 
+} CMeshNoVAO; 
+   
 
 extern Mesh *mesh_create(); // initiate all fields to ZERO, 0, NULL
 extern Mesh *mesh_init(Mesh *m);
@@ -72,6 +97,7 @@ extern void mesh_destroy(Mesh *m);
 
 /*general rendering procedure */
 extern void mesh_render(Shader *s, Mesh *m);
+extern void mesh_render_prim(Shader *s, Mesh *m);
 extern void mesh_renderTex(Shader *s, GLuint textureID, Mesh *m);
 extern void mesh_renderTex_prim(Shader *s, GLuint textureID, Mesh *m);
 

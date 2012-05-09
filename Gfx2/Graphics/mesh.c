@@ -567,6 +567,61 @@ void mesh_render(Shader *s, Mesh *m){
  
 }
 
+void mesh_render_prim(Shader *s, Mesh *m){
+  glUseProgram(s->shader);
+
+  printGLError("mesh_render (USEPROGRAM):");
+ 
+  /* set uniforms */
+  for (int i = 0; i < s->num_uniforms; ++i) {
+    switch (s->uniforms[i].type) {
+    case UNIFORM_UNDEFINED:
+      fprintf(stderr,"mesh_render: Undefined uniform\n");
+      exit(EXIT_FAILURE);
+    case UNIFORM_MAT3X3F:
+      glUniformMatrix3fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m3x3f);
+      printGLError("mesh_render (MAT3X3): ");  
+      break;
+    case UNIFORM_MAT4X4F:
+      glUniformMatrix4fv(s->uniforms[i].id, 1, GL_FALSE, *s->uniforms[i].data.m4x4f);
+      printGLError("mesh_render (MAT4X4):");  
+      break;
+    case UNIFORM_VEC3F:
+      glUniform3f(s->uniforms[i].id,
+		  s->uniforms[i].data.v3f->x,
+		  s->uniforms[i].data.v3f->y,
+		  s->uniforms[i].data.v3f->z);
+      printGLError("mesh_render (VEC3):");  
+      break;
+    case UNIFORM_VEC4F:
+      glUniform4f(s->uniforms[i].id,
+      		  s->uniforms[i].data.v4f->x,
+		  s->uniforms[i].data.v4f->y,
+		  s->uniforms[i].data.v4f->z,
+		  s->uniforms[i].data.v4f->w);
+      printGLError("mesh_render (VEC4):");  
+      break;
+    case UNIFORM_INT:
+      glUniform1i(s->uniforms[i].id,
+		  *s->uniforms[i].data.i);
+      printGLError("mesh_render (INT):");  
+      break;
+    default: 
+      /* Silently fall through */
+      break;
+    }
+    
+  } 
+  glBindVertexArray(m->vao);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->index_buffer);
+  glDrawElements(GL_TRIANGLES,m->num_indices,m->indices_type,0);
+  
+
+  printGLError("mesh_render (DrawElements):");  
+  
+ 
+}
+
 
 void mesh_renderTex_prim(Shader *s,GLuint textureID, Mesh *m){
   printGLError("mesh_render (BEFORE USEPROGRAM):");

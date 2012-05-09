@@ -422,8 +422,17 @@ void display(void) {
   // Does this call work.  
   // I must be leaving some VAO bound here! 
   // bug warning...
-  multimesh_renderFill(&shaderShadow,&mausoleum);
-
+  //multimesh_renderFill(&shaderShadow,&mausoleum);
+  //multimesh_render_prim(&shaderShadow,&mausoleum);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[0]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[1]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[2]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[3]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[4]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[5]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[6]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[7]);
+  mesh_render_prim(&shaderShadow,&mausoleum.meshes[8]);
   
   matrix_identity4x4f(shadowMatrix);
 
