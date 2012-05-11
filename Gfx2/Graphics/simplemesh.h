@@ -1,8 +1,8 @@
 
 
 
-#ifndef __MESH_H
-#define __MESH_H
+#ifndef __SIMPLEMESH_H
+#define __SIMPLEMESH_H
 
 
 #include <stdbool.h>
@@ -13,8 +13,9 @@
 
 
 /* 
-   ***    Phase out!  *** 
-
+   simplemesh.h 
+    - simplify and "make more clear the scope of" what was originially in file mesh.h
+    
    Whats a mesh, 
     A bunch of triangles that in some way "belong" together.
       

@@ -1,5 +1,5 @@
 
-#include "mesh.h"
+#include "simplemesh.h"
 
 
 #include "error.h"
@@ -11,11 +11,6 @@
 /* 3ds file loading */ 
 #include <lib3ds/file.h>
 #include <lib3ds/mesh.h>
-
-/* 
-   *** PHASE OUT! *** 
- */
-
 
 /* -----------------------------------------------------------------------------
    Set all fields to 0
@@ -34,9 +29,6 @@ Mesh * mesh_init(Mesh *m) {
   m->normal_buffer = 0;
   m->color_buffer = 0; 
   m->texel_buffer = 0;
-  
-  // m->texture_id = 0;
-  // m->textured  = false;
   
   m->indices = NULL;
   m->indices_type = 0;
@@ -65,15 +57,6 @@ void mesh_destroy(Mesh *m) {
   if (m) 
     free(m);
 }
-
-/* -----------------------------------------------------------------------------
-   SetShaders
-   -------------------------------------------------------------------------- */
-//void mesh_setShader(Mesh *m, GLuint sh, Uniform *uniforms){
-  //m->shader = sh; 
-  //m->uniforms = uniforms;
-  
-//}
 
 /* -----------------------------------------------------------------------------
    Upload a mesh (that is send the data to the GPU) 
@@ -223,7 +206,7 @@ void mesh_upload_prim(Mesh *m) {
   } 
   printGLError("u6");
   
-  //glBindVertexArray(0);
+  glBindVertexArray(0);
 }
 
 
