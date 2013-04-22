@@ -19,6 +19,10 @@
   * Try to push for as many elements as possible (per blocks)  with no syncs. 
   * Then try to push for as many elements as possible globally with as few 
     global syncs as possible (kernel invocations).
-  * investigate is some schema using atomic ops can limit global syncs even 
+  * investigate if some schema using atomic ops can limit global syncs even 
     further. 
+  * Experiment with using __shfl commands to exchange data within a
+    Warp without using any shared memory. (May influence implementation of
+    the "local" part of the scans.
+  * Experiment with other base-scans than Sklansky. 
     
