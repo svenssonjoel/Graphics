@@ -2,8 +2,13 @@
 * CUDA Files
   * sklansky1.cu
     1024 element scan in a single block using 32 threads. No Syncs!
+    uses 32 * 3 elements of shared mem.
   * sklansky2.cu 
     1024 element scan in a single block using 16 threads. No Syncs!
+    uses 32 * 2 elements of shared mem.
+  * sklansky3.cu 
+    4096 element scan in a single block using 32 threads. No Syncs! 
+    uses 64 * 2 elements of shared mem.
 
 
 

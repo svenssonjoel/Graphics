@@ -8,20 +8,24 @@
 
 
 /* ------------------------------------------------------------------------
-   Unrolled in-place(shared memory) Scan without syncs (16 threads, 32 elts) 
+   Unrolled in-place(shared memory) Scan without syncs (32 threads, 64 elts) 
    --------------------------------------------------------------------- */
-__device__ void skl_scan(int i, float* input, float *output, uint8_t *sbase, float *maxs) { 
+__device__ void skl_scan(int i, 
+			 float* input, 
+			 float *output, 
+			 uint8_t *sbase, 
+			 float *maxs) { 
   
   float *s_data = (float*)sbase;
   
   int tid = threadIdx.x; 
   int tids = tid << 1; 
 
-  int eltOffs = blockIdx.x * 32 + tid; 
+  int eltOffs = blockIdx.x * 64 + tid; 
 
   // Load data from  global memory into shared memory (in two separate load ops) 
   s_data[tid] = input[eltOffs]; 
-  s_data[tid + 16] = input[eltOffs + 16];
+  s_data[tid + 32] = input[eltOffs + 32];
     
   // NO SYNC HERE 
 
@@ -30,14 +34,14 @@ __device__ void skl_scan(int i, float* input, float *output, uint8_t *sbase, flo
   s_data[(tids | 7) - (tid & 3)] += s_data[tids & 0xFFFFFFF8 | 3]; 
   s_data[(tids | 15) - (tid & 7)] += s_data[tids & 0xFFFFFFF0 | 7]; 
   s_data[(tids | 31) - (tid & 15)] += s_data[tids & 0xFFFFFFE0 | 15]; 
- 
+  s_data[(tids | 63) - (tid & 31)] += s_data[tids & 0xFFFFFFC0 | 31];
   // NO Interleaved SYNCS here.
 
   output[eltOffs] = s_data[tid]; 
-  output[eltOffs + 16] = s_data[tid + 16];
+  output[eltOffs + 32] = s_data[tid + 32];
   
   if(tid == 0) 
-    maxs[i] = s_data[31];
+    maxs[i] = s_data[63];
   
 }
 
@@ -80,11 +84,11 @@ __global__ void kernel(float* input0,
   extern __shared__ __attribute__ ((aligned(16))) uint8_t sbase[];
   
   //  float *maxs = (float*)(sbase+(sizeof(float)*64));
-  float *maxs = (float*)(sbase+(sizeof(float)*32));
+  float *maxs = (float*)(sbase+(sizeof(float)*64));
   
-  for (int i = 0; i < 32; i ++) { 
+  for (int i = 0; i < 64; i ++) { 
     //sklansky(i,input0+i*32,output0+i*32,sbase,maxs);
-    skl_scan(i,input0+i*32,output0+i*32,sbase,maxs);
+    skl_scan(i,input0+i*64,output0+i*64,sbase,maxs);
   }
   
   float v; //  discard this value
@@ -94,31 +98,31 @@ __global__ void kernel(float* input0,
 
   // distribute (now in two phases) 
 
-  // 15 thread pass
+  // 31 thread pass
   if (threadIdx.x > 0) {
-    for (int j = 0; j < 32; j ++) {
-      output0[(blockIdx.x*32)+(threadIdx.x*32+j)] += maxs[threadIdx.x-1];
+    for (int j = 0; j < 64; j ++) {
+      output0[(blockIdx.x*64)+(threadIdx.x*64+j)] += maxs[threadIdx.x-1];
     }
   }
 
-  // 16 thread pass 
-  for (int j = 0; j < 32; j ++) {
-    output0[((blockIdx.x+16)*32)+(threadIdx.x*32+j)] += maxs[threadIdx.x+15];
+  // 32 thread pass 
+  for (int j = 0; j < 64; j ++) {
+    output0[((blockIdx.x+32)*64)+(threadIdx.x*64+j)] += maxs[threadIdx.x+31];
   }
   
   maxout[threadIdx.x] = maxs[threadIdx.x];
-  maxout[threadIdx.x+16] = maxs[threadIdx.x+16];
+  maxout[threadIdx.x+32] = maxs[threadIdx.x+32];
 
 }
 
-#define N 32*32
+#define N 64*64
 
 int main(void) {
   
   float v[N]; 
   float r[N]; 
   //float rc[N];
-  float m[32];
+  float m[64];
 
   float *dv; 
   float *dr; 
@@ -131,16 +135,17 @@ int main(void) {
 
   cudaMalloc((void**)&dv,N*sizeof(float)); 
   cudaMalloc((void**)&dr,N*sizeof(float));
-  cudaMalloc((void**)&dm,32*sizeof(float));
+  cudaMalloc((void**)&dm,64*sizeof(float));
   
   cudaMemcpy(dv,v,N*sizeof(float),cudaMemcpyHostToDevice);
   
   //kernel<<<1,32,32*3*(sizeof(float))>>>(dv,dr,dm);
-  kernel<<<1,16,32*2*(sizeof(float))>>>(dv,dr,dm);
-
+  //kernel<<<1,16,32*2*(sizeof(float))>>>(dv,dr,dm);
+  kernel<<<1,32,64*2*(sizeof(float))>>>(dv,dr,dm);
+  
 
   cudaMemcpy(r,dr,N*sizeof(float),cudaMemcpyDeviceToHost);
-  cudaMemcpy(m,dm,32*sizeof(float),cudaMemcpyDeviceToHost);
+  cudaMemcpy(m,dm,64*sizeof(float),cudaMemcpyDeviceToHost);
 
   for (int i = 0; i < N; i ++) { 
     printf("%f ",r[i]);
@@ -149,7 +154,7 @@ int main(void) {
   
   printf("\n ------ \n");
   
-  for (int i = 0; i < 32; i ++) { 
+  for (int i = 0; i < 64; i ++) { 
     printf("%f ",m[i]);
   }
   
