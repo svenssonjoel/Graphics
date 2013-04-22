@@ -25,4 +25,14 @@
     Warp without using any shared memory. (May influence implementation of
     the "local" part of the scans.
   * Experiment with other base-scans than Sklansky. 
-    
+  * load float2s instead of floats     
+  * 64*64*4 = 16384. so entire work set fits in shared memory. 
+    (if that is a good thing). This only gives room for 3 such blocks 
+    in the shared mem of an MP. 
+
+* Potential issues: 
+  * Distribute phase: each thread performs 2*64 additions on global memory! 
+      - Potentially better to do in shared memory ? 
+  * Each "warp-scan" reads global memory and writes global memory. 
+      - put entire work set in shared memory (enough room?).  
+  

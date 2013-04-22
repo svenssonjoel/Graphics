@@ -26,7 +26,7 @@ __device__ void skl_scan(int i,
 
   int eltOffs = blockIdx.x * 64 + tid; 
 
-  // Load data from global memory into shared memory (in two separate load ops) 
+  // Load data from global memory into shared memory (in two separate load ops)
   s_data[tid] = input[eltOffs]; 
   s_data[tid + 32] = input[eltOffs + 32]; 
   // NO SYNC HERE 
@@ -61,7 +61,6 @@ __global__ void kernel(float* input0,
   
   // Sequentially execute 64 scans
   for (int i = 0; i < 64; i ++) { 
-    //sklansky(i,input0+i*32,output0+i*32,sbase,maxs);
     skl_scan(i,input0+i*64,output0+i*64,s_data,maxs);
   }
   
