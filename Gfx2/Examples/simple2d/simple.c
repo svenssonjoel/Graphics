@@ -241,14 +241,14 @@ void drawGround(void) {
   glBindBuffer(GL_ARRAY_BUFFER, groundBufName);
 
   printGLError("drawGround2:");
-  glVertexAttribPointer(constVertexIndex,2, GL_FLOAT, GL_FALSE,
-    			0,(void*)0);
+  //glVertexAttribPointer(constVertexIndex,2, GL_FLOAT, GL_FALSE,
+  //  			0,(void*)0);
   printGLError("drawGround3:");
  
   
   glDrawArrays(GL_TRIANGLE_FAN,0, 4);
-
-  glDisableVertexAttribArray(constVertexIndex);
+  printGLError("drawGround4:");
+  // glDisableVertexAttribArray(constVertexIndex);
 
 }
 
@@ -263,17 +263,18 @@ void display(void) {
   glClearColor(1.0,1.0,1.0,1.0);
   glClear(GL_COLOR_BUFFER_BIT);
 
-
+  printGLError("display1:");
   
   drawGround();   
+  printGLError("display2:");
   drawQuad();
 
  
 
-
+  printGLError("display3:");
   
   glutSwapBuffers();
-  printGLError("display:");
+  printGLError("display4:");
 
 }
 

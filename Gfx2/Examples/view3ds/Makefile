@@ -1,6 +1,6 @@
 C99 = gcc -std=c99 
 
-LIBS = -lglut -lGLEW -lGLU -lm -l3ds -lpng
+LIBS = -lglut -lGLEW -lGLU -l3ds -lpng -lm
 CFLAGS = -Wall
 
 INC = -I../../
@@ -9,7 +9,7 @@ GFX = ../../Graphics/graphlib.o
 all: view3ds
 
 view3ds: view3ds.c 
-	$(C99) $(CFLAGS) -o view3ds view3ds.c $(LIBS) $(INC) $(GFX)
+	$(C99) $(CFLAGS) -o view3ds view3ds.c $(INC) $(GFX)  $(LIBS)
 
 
 clean: 
