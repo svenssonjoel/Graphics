@@ -1,2 +1,19 @@
 
 * CUDA Files
+  * sklansky1.cu
+    1024 element scan in a single block using 32 threads. No Syncs!
+  * sklansky2.cu 
+    1024 element scan in a single block using 16 threads. No Syncs!
+
+
+
+* TODOs: 
+  * Test for correctness. 
+  * Implement large scan (millions of elements).
+  * Benchmark for performance. 
+  * Try to push for as many elements as possible (per blocks)  with no syncs. 
+  * Then try to push for as many elements as possible globally with as few 
+    global syncs as possible (kernel invocations).
+  * investigate is some schema using atomic ops can limit global syncs even 
+    further. 
+    

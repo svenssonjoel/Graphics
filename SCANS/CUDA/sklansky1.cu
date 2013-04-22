@@ -4,7 +4,7 @@
 
 
 // For comparisons
-#include "seqScan.c"
+//#include "seqScan.c"
 
 __device__ int sklansky(int i, float* input0, float *output0, uint8_t *sbase,float *maxs) {
 
@@ -66,7 +66,7 @@ int main(void) {
   
   float v[N]; 
   float r[N]; 
-  float rc[N];
+  //float rc[N];
   float m[32];
 
   float *dv; 
@@ -90,7 +90,7 @@ int main(void) {
   cudaMemcpy(m,dm,32*sizeof(float),cudaMemcpyDeviceToHost);
 
   for (int i = 0; i < N; i ++) { 
-    printf("%f ",r[i],rc[i]);
+    printf("%f ",r[i]);
   }
 
   
@@ -102,12 +102,12 @@ int main(void) {
   
   
 
-  seqScan(v,rc,N);
-  int s = compare(rc,r,0.01,N);
+  //seqScan(v,rc,N);
+  //int s = compare(rc,r,0.01,N);
  
  
 
-  printf ("\n%s\n", s? "same" : "not the same");
+  //printf ("\n%s\n", s? "same" : "not the same");
   
 
   return 0;
