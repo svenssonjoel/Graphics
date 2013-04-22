@@ -7,7 +7,13 @@
 //#include "seqScan.c"
 
 
-#define N 4096*64*64
+#define CLONES 8
+#define REPS   8
+
+// block size in ELEMENTS!
+#define BLOCK_SIZE (CLONES*REPS*64) 
+
+#define N CLONES*REPS*64
 
 
 /* ------------------------------------------------------------------------
@@ -25,9 +31,10 @@ __device__ void skl_scan(int i,
   int tids = tid << 1; 
 
   // Load data from global memory into shared memory (in two separate load ops)
-  s_data[tid] = input[tid]; 
-  s_data[tid + 32] = input[tid + 32]; 
-  // NO SYNC HERE 
+  s_data[tid*2] = input[tid*2]; 
+  s_data[tid*2+1] = input[tid*2+1]; 
+  //  __syncthreads();
+
 
   s_data[tids | 1] += s_data[tids]; 
   s_data[(tids | 3) - (tid & 1)] += s_data[tids & 0xFFFFFFFC | 1]; 
@@ -37,11 +44,13 @@ __device__ void skl_scan(int i,
   s_data[(tids | 63) - (tid & 31)] += s_data[tids & 0xFFFFFFC0 | 31];
   // NO Interleaved SYNCS here.
 
-  output[tid] = s_data[tid]; 
-  output[tid + 32] = s_data[tid + 32];
+  //__syncthreads();
+  output[tid*2] = s_data[tid*2]; 
+  output[tid*2+1] = s_data[tid*2+1];
   
-  if(tid == 0) 
-    maxs[i] = s_data[63];
+  //__syncthreads();
+  if(tid % 32 == 0) 
+    maxs[i*CLONES+(tid / 32)] = 1;// s_data[(tid / 32) * 64];
   
 }
 
@@ -55,39 +64,44 @@ __global__ void kernel(float* input0,
    
   // shared data. (two different kinds. warp local and across warps.) 
   extern __shared__ float s_data[]; 
-  float *maxs = &s_data[64]; 
+  float *maxs = &s_data[512]; 
   
   // Sequentially execute 64 scans
-  for (int i = 0; i < 64; i ++) { 
+  for (int i = 0; i < REPS; i ++) {  
     skl_scan(i,
-	     (input0+blockIdx.x*4096)+i*64,
-	     (output0+blockIdx.x*4096)+i*64,
+	     input0+(blockIdx.x*BLOCK_SIZE)+(i*512),
+	     output0+(blockIdx.x*BLOCK_SIZE)+(i*512),
 	     s_data,maxs);
   }
-  
+
+  // Now needs one __syncthreads() here! 
+  __syncthreads();
+
   // in parallel scan the maximum array 
   float v; //discard this value.
-  skl_scan(0,maxs,maxs,(float *)s_data,&v);
+  if (threadIdx.x < 32) 
+    skl_scan(0,maxs,maxs,(float *)s_data,&v);
   
-
+  //__syncthreads();
   // distribute (now in two phases) 
 
   // 31 thread pass. 
-  if (threadIdx.x > 0) {
-    for (int j = 0; j < 64; j ++) {
-      output0[(blockIdx.x*4096)+(threadIdx.x*64)+j] += maxs[threadIdx.x-1];
-    }
-  }
+  //if (threadIdx.x > 0) {
+  //  for (int j = 0; j < 64; j ++) {
+  //    output0[(blockIdx.x*128)+(threadIdx.x*64)+j] += maxs[threadIdx.x-1];
+  //  }
+  //}
 
   // 32 thread pass. 
-  for (int j = 0; j < 64; j ++) {
-    output0[(blockIdx.x*4096)+((threadIdx.x+32)*64)+j] += maxs[threadIdx.x+31];
-  }
+  //for (int j = 0; j < 64; j ++) {
+  //  output0[(blockIdx.x*128)+((threadIdx.x+32)*64)+j] += maxs[threadIdx.x+31];
+  //}
 
   // This is a debug step. 
-  //maxout[threadIdx.x] = maxs[threadIdx.x];
-  //maxout[threadIdx.x+32] = maxs[threadIdx.x+32];
-
+  if (threadIdx.x < 32) {
+    maxout[threadIdx.x] = maxs[threadIdx.x];
+    maxout[threadIdx.x+32] = maxs[threadIdx.x+32];
+  }
 }
 
 /* ------------------------------------------------------------------------
@@ -115,7 +129,7 @@ int main(void) {
 
   cudaMalloc((void**)&dv,N*sizeof(float)); 
   cudaMalloc((void**)&dr,N*sizeof(float));
-  cudaMalloc((void**)&dm,4096*64*sizeof(float));
+  cudaMalloc((void**)&dm,64*sizeof(float));
   
   cudaMemcpy(dv,v,N*sizeof(float),cudaMemcpyHostToDevice);
   
@@ -127,7 +141,7 @@ int main(void) {
   cudaEventCreate(&stop);
   cudaEventRecord(start,0);
 
-  kernel<<<4096,32,64*2*(sizeof(float))>>>(dv,dr,dm);
+  kernel<<<1,256,(512+64)*(sizeof(float))>>>(dv,dr,dm);
 
   cudaEventRecord(stop,0);
   cudaEventSynchronize(stop);
@@ -140,7 +154,7 @@ int main(void) {
   cudaMemcpy(m,dm,64*sizeof(float),cudaMemcpyDeviceToHost);
 
 
-  for (int i = 0; i < 256; i ++) { 
+  for (int i = 0; i < N; i ++) { 
     printf("%f ",r[i]);
   }
 

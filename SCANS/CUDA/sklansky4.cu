@@ -6,8 +6,9 @@
 // For comparisons
 //#include "seqScan.c"
 
-
-#define N 4096*64*64
+#define ELTS 64
+#define BS 1024
+#define N 16384*BS
 
 
 /* ------------------------------------------------------------------------
@@ -45,6 +46,33 @@ __device__ void skl_scan(int i,
   
 }
 
+__device__ void skl_scan16(int i, 
+			   float* input, 
+			   float *output, 
+			   float *s_data) { 
+    
+  int tid = threadIdx.x; 
+  int tids = tid << 1; 
+
+  // Load data from global memory into shared memory (in two separate load ops)
+  s_data[tid] = input[tid]; 
+  s_data[tid + 8] = input[tid + 8]; 
+  // NO SYNC HERE 
+
+  s_data[tids | 1] += s_data[tids]; 
+  s_data[(tids | 3) - (tid & 1)] += s_data[tids & 0xFFFFFFFC | 1]; 
+  s_data[(tids | 7) - (tid & 3)] += s_data[tids & 0xFFFFFFF8 | 3]; 
+  s_data[(tids | 15) - (tid & 7)] += s_data[tids & 0xFFFFFFF0 | 7]; 
+  //s_data[(tids | 31) - (tid & 15)] += s_data[tids & 0xFFFFFFE0 | 15]; 
+  //s_data[(tids | 63) - (tid & 31)] += s_data[tids & 0xFFFFFFC0 | 31];
+  // NO Interleaved SYNCS here.
+
+  output[tid] = s_data[tid]; 
+  output[tid + 8] = s_data[tid + 8];
+    
+}
+
+
 
 /* ------------------------------------------------------------------------
    The Scan kernel (Thousand(s) of elements. NO SYNCS AT ALL) 
@@ -58,31 +86,33 @@ __global__ void kernel(float* input0,
   float *maxs = &s_data[64]; 
   
   // Sequentially execute 64 scans
-  for (int i = 0; i < 64; i ++) { 
+  for (int i = 0; i < 16; i ++) { 
     skl_scan(i,
-	     (input0+blockIdx.x*4096)+i*64,
-	     (output0+blockIdx.x*4096)+i*64,
+	     (input0+blockIdx.x*BS)+i*64,
+	     (output0+blockIdx.x*BS)+i*64,
 	     s_data,maxs);
   }
   
   // in parallel scan the maximum array 
-  float v; //discard this value.
-  skl_scan(0,maxs,maxs,(float *)s_data,&v);
+  //float v; //discard this value.
+
+  if (threadIdx.x < 16)
+    skl_scan16(0,maxs,maxs,(float *)s_data);
   
 
-  // distribute (now in two phases) 
+  // distribute
 
-  // 31 thread pass. 
-  if (threadIdx.x > 0) {
+  // 15 thread pass. 
+  if (threadIdx.x > 0 && threadIdx.x < 16) {
     for (int j = 0; j < 64; j ++) {
-      output0[(blockIdx.x*4096)+(threadIdx.x*64)+j] += maxs[threadIdx.x-1];
+      output0[(blockIdx.x*BS)+(threadIdx.x*64)+j] += maxs[threadIdx.x-1];
     }
   }
 
   // 32 thread pass. 
-  for (int j = 0; j < 64; j ++) {
-    output0[(blockIdx.x*4096)+((threadIdx.x+32)*64)+j] += maxs[threadIdx.x+31];
-  }
+  //for (int j = 0; j < 64; j ++) {
+  //  output0[(blockIdx.x*BS)+((threadIdx.x+32)*64)+j] += maxs[threadIdx.x+31];
+  //}
 
   // This is a debug step. 
   //maxout[threadIdx.x] = maxs[threadIdx.x];
@@ -127,7 +157,7 @@ int main(void) {
   cudaEventCreate(&stop);
   cudaEventRecord(start,0);
 
-  kernel<<<4096,32,64*2*(sizeof(float))>>>(dv,dr,dm);
+  kernel<<<16384,32,64*2*(sizeof(float))>>>(dv,dr,dm);
 
   cudaEventRecord(stop,0);
   cudaEventSynchronize(stop);
