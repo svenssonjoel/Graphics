@@ -13,7 +13,7 @@
 // block size in ELEMENTS!
 #define BLOCK_SIZE (CLONES*REPS*64) 
 
-#define N CLONES*REPS*64
+#define N 4096*CLONES*REPS*64
 
 
 /* ------------------------------------------------------------------------
@@ -50,7 +50,10 @@ __device__ void skl_scan(int i,
   
   //__syncthreads();
   if(tid % 32 == 0) 
-    maxs[i*CLONES+(tid / 32)] = 1;// s_data[(tid / 32) * 64];
+    maxs[(i<<3)+(tid>>5)] = s_data[(tid << 1) | 0x3F];
+  //maxs[i*CLONES+(tid / 32)] = s_data[(tid / 32)*64 + 63];
+  // (i<<3)+(tid>>5)                    ((tid>>5)<<6) + 63 
+  //                                    (tid << 1) | 0x3F)   
   
 }
 
@@ -82,21 +85,16 @@ __global__ void kernel(float* input0,
   if (threadIdx.x < 32) 
     skl_scan(0,maxs,maxs,(float *)s_data,&v);
   
-  //__syncthreads();
-  // distribute (now in two phases) 
+  __syncthreads();
 
-  // 31 thread pass. 
-  //if (threadIdx.x > 0) {
-  //  for (int j = 0; j < 64; j ++) {
-  //    output0[(blockIdx.x*128)+(threadIdx.x*64)+j] += maxs[threadIdx.x-1];
-  //  }
-  //}
-
-  // 32 thread pass. 
-  //for (int j = 0; j < 64; j ++) {
-  //  output0[(blockIdx.x*128)+((threadIdx.x+32)*64)+j] += maxs[threadIdx.x+31];
-  //}
-
+  
+  // really messy code  
+  for (int j = 0; j < REPS; j ++) {
+    if (j != 0 || threadIdx.x >=  64) 
+      output0[(blockIdx.x*BLOCK_SIZE)+(j*256)+threadIdx.x] += maxs[(((j*256)+threadIdx.x) / 64)-1];
+    output0[(blockIdx.x*BLOCK_SIZE)+(j*256)+threadIdx.x+2048] += maxs[(((j*256)+threadIdx.x+2048) /64)-1];
+  }
+ 
   // This is a debug step. 
   if (threadIdx.x < 32) {
     maxout[threadIdx.x] = maxs[threadIdx.x];
@@ -141,7 +139,7 @@ int main(void) {
   cudaEventCreate(&stop);
   cudaEventRecord(start,0);
 
-  kernel<<<1,256,(512+64)*(sizeof(float))>>>(dv,dr,dm);
+  kernel<<<4096,256,(512+64)*(sizeof(float))>>>(dv,dr,dm);
 
   cudaEventRecord(stop,0);
   cudaEventSynchronize(stop);
@@ -154,7 +152,7 @@ int main(void) {
   cudaMemcpy(m,dm,64*sizeof(float),cudaMemcpyDeviceToHost);
 
 
-  for (int i = 0; i < N; i ++) { 
+  for (int i = 0; i < 4096 /*N*/; i ++) { 
     printf("%f ",r[i]);
   }
 
