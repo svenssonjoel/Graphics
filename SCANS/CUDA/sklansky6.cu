@@ -17,29 +17,18 @@
 //#define N 4096*CLONES*REPS*64
 
 #define N (BS*BOS*SEQUENTIAL_SIZE)
-#define BS 512
+#define BS 128
 #define SEQUENTIAL_SIZE 512
 #define BLOCK_DATA_SIZE (BS * SEQUENTIAL_SIZE)
-#define BOS 64
+#define BOS 100
 #define WARPSIZE 32
 
 /* ------------------------------------------------------------------------
    Reduction kernel (reduce 64 element sub blocks of global array)  
    --------------------------------------------------------------------- */
   
-/*
-__global__ void reduce2(float *input, float* output) { 
-    
-  int tid = threadIdx.x; 
- 
-  output[tid] = input[tid];
-}  
-*/
-
-
 __global__ void reduce(float *input, float* output) { 
-  
-  
+    
   extern __shared__ float s_data[];
   
   int tid = threadIdx.x; 
