@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h> 
 
+#include <sm_30_intrinsics.h>
 
 
 // For comparisons
@@ -16,17 +17,17 @@
 
 //#define N 4096*CLONES*REPS*64
 
-#define N (BS*BOS*SEQUENTIAL_SIZE)
-#define BS 128
-#define SEQUENTIAL_SIZE 512
+#define N 4096*4096 // (BS*BOS*SEQUENTIAL_SIZE)
+#define BS 512
+#define SEQUENTIAL_SIZE 32
 #define BLOCK_DATA_SIZE (BS * SEQUENTIAL_SIZE)
 #define BOS 100
 #define WARPSIZE 32
 
 /* ------------------------------------------------------------------------
-   Reduction kernel (reduce 64 element sub blocks of global array)  
+
    --------------------------------------------------------------------- */
-  
+
 __global__ void reduce(float *input, float* output) { 
     
   extern __shared__ float s_data[];
@@ -63,6 +64,100 @@ __global__ void reduce(float *input, float* output) {
   // chunking out the 4 reductions per warp
   if (wid < 4)
     output[blockIdx.x*(4*BS/WARPSIZE)+warp*4+wid] = s_data[warp*32+(wid<<3)];
+
+} 
+
+/* ------------------------------------------------------------------------
+
+   --------------------------------------------------------------------- */
+__global__ void reduce2(float *input, float* output) { 
+  extern __shared__ float s_data[];
+  
+  int tid = threadIdx.x; 
+
+  float sum = 0.0;
+  for (int i = 0; i < 16; i ++) { 
+    sum += input[blockIdx.x*4096+tid*16+i];
+  }
+  
+  s_data[tid] = sum; 
+  __syncthreads();  
+
+  if (tid < 128) 
+    s_data[tid*2] += s_data[tid*2+1];
+  __syncthreads();
+  if (tid < 64) 
+    s_data[tid*4] += s_data[tid*4+2]; 
+  __syncthreads();
+  if (tid < 32) 
+    s_data[tid*8] += s_data[tid*8+4];
+  //__syncthreads();
+  if (tid < 16) 
+    s_data[tid*16] += s_data[tid*16+8];
+  //__syncthreads();
+  if (tid < 8) 
+    s_data[tid*32] += s_data[tid*32+16]; 
+  //__syncthreads();
+  if (tid < 4)
+    s_data[tid*64] += s_data[tid*64+32];
+  //__syncthreads();
+  if (tid < 2) 
+    s_data[tid*128] += s_data[tid*128+64];
+  //__syncthreads();
+  if (tid < 1) 
+    s_data[tid] += s_data[tid+128];
+  //__syncthreads();
+  
+  output[blockIdx.x] = s_data[0];
+} 
+
+/* ------------------------------------------------------------------------
+
+   --------------------------------------------------------------------- */
+__global__ void reduce3(float *input, float* output) { 
+  extern __shared__ float s_data[];
+  
+  int tid = threadIdx.x; 
+  int laneId = tid & 0x1f;
+  int warp   = tid / 32;
+
+  float sum = 0.0;
+  for (int i = 0; i < 16; i ++) { 
+    //im not not 100% sure here
+    sum += input[blockIdx.x*4096+tid+i*16];
+  }
+ 
+  float value; 
+
+  // each warp performs a 32 element reductions using shfls
+  for (int i = 16; i > 0; i = i / 2) { 
+    value = __shfl(sum,laneId+i);
+    sum += value; 
+  }
+
+  // shared memory to communicate between warps
+  if (laneId == 0) 
+    s_data[warp] = sum; 
+  
+  // the only sync 
+  __syncthreads();    
+  
+  // Now 32 elements left
+  // Process the last 32 elements in one warp
+  if (warp == 0) { 
+    
+    sum = s_data[laneId];
+    
+
+    for (int i = 16; i > 0; i = i / 2) { 
+      value = __shfl(sum,laneId+i);
+      sum += value; 
+    }
+    
+    if(laneId == 0) 
+      output[blockIdx.x] = sum;
+    
+  } 
 
 } 
 
@@ -198,7 +293,9 @@ int main(void) {
 
   //kernel<<<4096,256,(512+64)*(sizeof(float))>>>(dv,dr,dm);
 
-  reduce<<<BOS,BS,BS*sizeof(float)>>>(dv,dr);
+  //reduce<<<BOS,BS,BS*sizeof(float)>>>(dv,dr);
+  //reduce2<<<4096,256,256*sizeof(float)>>>(dv,dr);
+  reduce3<<<4096,256,32*sizeof(float)>>>(dv,dr);
   
   cudaEventRecord(stop,0);
   cudaEventSynchronize(stop);
