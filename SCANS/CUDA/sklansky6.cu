@@ -142,17 +142,23 @@ __global__ void reduce3(float *input, float* output) {
   // the only sync 
   __syncthreads();    
   
-  // Now 32 elements left
-  // Process the last 32 elements in one warp
-  if (warp == 0) { 
+  // Now 8 elements left
+  // Process the last 8 elements in one warp
+  if (warp == 0 && laneId < 8) { 
     
     sum = s_data[laneId];
     
 
-    for (int i = 16; i > 0; i = i / 2) { 
-      value = __shfl_down(sum,i);
-      sum += value; 
-    }
+    // 3 step 8 to 1 value reduction
+    value = __shfl_down(sum,4);
+    sum += value; 
+      
+    value = __shfl_down(sum,2);
+    sum += value; 
+
+    value = __shfl_down(sum,1);
+    sum += value; 
+  
     
     if(laneId == 0) 
       output[blockIdx.x] = sum;
