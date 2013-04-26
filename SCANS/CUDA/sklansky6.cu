@@ -131,7 +131,7 @@ __global__ void reduce3(float *input, float* output) {
 
   // each warp performs a 32 element reductions using shfls
   for (int i = 16; i > 0; i = i / 2) { 
-    value = __shfl(sum,laneId+i);
+    value = __shfl_down(sum,i);
     sum += value; 
   }
 
@@ -150,7 +150,7 @@ __global__ void reduce3(float *input, float* output) {
     
 
     for (int i = 16; i > 0; i = i / 2) { 
-      value = __shfl(sum,laneId+i);
+      value = __shfl_down(sum,i);
       sum += value; 
     }
     
