@@ -20,6 +20,38 @@
 #define deltaP ((xmax - xmin)/512)
 #define deltaQ ((ymax - ymin)/512) 
 
+
+extern "C" __global__ void mandelGen(uint8_t* output0)
+{
+    extern __shared__ uint8_t sbase[];
+    uint32_t tid = threadIdx.x;
+    float v0;
+    float v1;
+    uint32_t v2;
+    float t3;
+    float t4;
+    uint32_t t5;
+    
+    if (blockIdx.x < 512U) {
+        v0 = 0.0F;
+        v1 = 0.0F;
+        v2 = 1U;
+        while (v0 * v0 + v1 * v1 < 4.0F && v2 < 512U) {
+            t3 = v0;
+            t4 = v1;
+            t5 = v2;
+            v0 = t3 * t3 - t4 * t4 + (-0.7931140065193176F + (float) tid *
+                                      1.3693165965378284e-4F);
+            v1 = 2.0F * t3 * t4 + (0.1409740000963211F -
+                                   (float) blockIdx.x *
+                                   2.0146874885540456e-4F);
+            v2 = t5 + 1U;
+        }
+        output0[blockIdx.x * 512U + tid] = (uint8_t) v2 % 16U * 16U;
+    }
+}
+
+
 __global__ void kernel(uint8_t* output0){
   
     float v3;
@@ -171,7 +203,9 @@ int main(void) {
   //kernel<<<HEIGHT,WIDTH,0>>>(dr);	
   //plate1<<<HEIGHT,WIDTH,0>>>(dr);	
   //plate2<<<HEIGHT,WIDTH,0>>>(dr);	  		
-  plate3<<<HEIGHT,WIDTH,0>>>(dr);	  		
+  //plate3<<<HEIGHT,WIDTH,0>>>(dr);	  		
+
+  mandelGen<<<HEIGHT,WIDTH,0>>>(dr);	  		
 
   cudaEventRecord(stop,0);
   cudaEventSynchronize(stop);
