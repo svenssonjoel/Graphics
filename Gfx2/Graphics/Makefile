@@ -1,7 +1,7 @@
 
 C99 = gcc -std=c99 
 ##-lglut -lGLEW -lGLU -lm -l3ds
-LIBS = 
+LIBS = -lglut -lGLEW -lGL -lGLU -lm -l3ds -lpng
 CFLAGS = -Wall
 
 SRCS=$(wildcard *.c)

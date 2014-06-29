@@ -9,7 +9,7 @@ GFX = ../../Graphics/graphlib.o
 all: info3ds
 
 info3ds: info3ds.c 
-	$(C99) $(CFLAGS) -o info3ds info3ds.c $(LIBS) $(INC) $(GFX)
+	$(C99) $(CFLAGS) -o info3ds info3ds.c $(GFX) $(LIBS) $(INC) 
 
 
 clean: 
